@@ -1,4 +1,4 @@
-# deployments
+# deployment
 
 This directory contains deployment-related configuration and environment setup files.
 

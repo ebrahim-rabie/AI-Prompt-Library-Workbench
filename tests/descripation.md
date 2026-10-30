@@ -1,4 +1,4 @@
-# test
+# tests
 
 This directory is for automated tests and validation assets.
 

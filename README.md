@@ -25,6 +25,7 @@ AI Prompt Library & Workbench is a community platform for creating, sharing, and
 ## Documents
 
 - [Software Requirements Specification (SRS)](docs/CSAI203_SRS_202402014.pdf)
+- [System Design Document](docs/CSAI203_Design_202402014.pdf)
 
 ## Setup and Running Instructions
 

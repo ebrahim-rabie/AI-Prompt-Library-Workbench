@@ -35,17 +35,56 @@ AI Prompt Library & Workbench is a community platform for creating, sharing, and
    cd AI-Prompt-Library-Workbench
    ```
 
-2. Environment configuration:
-   Create a `.env` file in the project root based on configuration templates in `deployment/`.
+Requirements: Python 3.11 or newer. All commands run from the repository root.
 
-3. Install dependencies:
-   Dependency installation commands will be documented here once the technology stack is configured.
+2. Create a virtual environment and install dependencies:
+   ```bash
+   python -m venv .venv
+   # Windows
+   .venv\Scripts\activate
+   # macOS / Linux
+   source .venv/bin/activate
 
-4. Run migrations:
-   Apply database schema files from `migrations/`.
+   pip install -r requirements.txt
+   ```
 
-5. Run the application:
-   Start instructions will be provided in `deployment/`.
+3. Environment configuration:
+   Copy [`deployment/.env.example`](deployment/.env.example) to `.env` in the project root and fill in
+   `SECRET_KEY` and `ADMIN_PASSWORD`. Leave `DATABASE_URL` empty to use SQLite (`instance/dev.db`).
 
-6. Run tests:
-   Execute test suites located in `tests/`.
+4. Create the database (runs the scripts in `migrations/`):
+   ```bash
+   flask --app src/wsgi.py db upgrade
+   ```
+
+5. Load the first administrator and the initial tags:
+   ```bash
+   python deployment/seed.py
+   ```
+
+6. Run the application, then open http://127.0.0.1:5000:
+   ```bash
+   flask --app src/wsgi.py run
+   ```
+
+7. Run the tests:
+   ```bash
+   python -m pytest
+   ```
+
+When a model changes, create a new migration with
+`flask --app src/wsgi.py db migrate -m "describe the change"` and review the generated file before
+committing it. Production settings are described in [deployment/README.md](deployment/README.md).
+
+## Code Layout (MVC)
+
+| Layer | Folder | Contents |
+|---|---|---|
+| Model | `src/app/models/` | SQLAlchemy entities for all 10 tables, enumerations, validation rules |
+| Model | `src/app/services/` | Business rules called by the controllers (`AuthService`, ...) |
+| Controller | `src/app/controllers/` | Flask Blueprints, one per feature, and the error pages |
+| Controller | `src/app/middleware/auth.py` | Session timeout, `login_required` (401), `admin_required` (403), `require_owner` (403) |
+| View | `src/app/templates/`, `src/app/static/` | Jinja2 templates (all extend `base.html`) and CSS |
+
+New features add a Blueprint in `src/app/controllers/`, register it in `_register_blueprints()` in
+`src/app/__init__.py`, and add tests under `tests/unit/` and `tests/integration/`.

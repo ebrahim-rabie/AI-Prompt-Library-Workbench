@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "partials/_forms.html" import field, csrf_field %}
+{% block title %}Sign in{% endblock %}
+{% block page_class %}page--narrow{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h1>Sign in</h1>
+
+  {% if error %}
+    <p class="alert alert--error" role="alert">{{ error }}</p>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('auth.login') }}" novalidate>
+    {{ csrf_field() }}
+    {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+    {{ field("identifier", "Username or email", identifier, autocomplete="username", required=True, maxlength=255) }}
+    {{ field("password", "Password", type="password", autocomplete="current-password", required=True) }}
+    <button type="submit" class="btn btn--primary btn--block">Sign in</button>
+  </form>
+
+  <p class="panel__footer">New here? <a href="{{ url_for('auth.register') }}">Create an account</a></p>
+</section>
+{% endblock %}

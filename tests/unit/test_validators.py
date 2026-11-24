@@ -53,3 +53,12 @@ def test_bio_rules():
 
 def test_password_digit_must_be_ascii():
     assert v.validate_password("abcdefg\u0663") is not None  # Arabic-Indic digit three
+
+
+def test_empty_database_url_falls_back_to_default(monkeypatch):
+    from app.config import _database_url
+
+    monkeypatch.setenv("DATABASE_URL", "")
+    assert _database_url("sqlite:///x.db") == "sqlite:///x.db"
+    monkeypatch.setenv("DATABASE_URL", "postgres://u:p@h/db")
+    assert _database_url("sqlite:///x.db") == "postgresql://u:p@h/db"

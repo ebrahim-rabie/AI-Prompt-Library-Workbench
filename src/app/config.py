@@ -13,7 +13,8 @@ INSTANCE_DIR = BASE_DIR / "instance"
 
 
 def _database_url(default):
-    url = os.environ.get("DATABASE_URL", default)
+    # An empty DATABASE_URL= line in .env means "use the default", not an empty URL.
+    url = os.environ.get("DATABASE_URL") or default
     # Some hosts still hand out the old "postgres://" scheme, which SQLAlchemy rejects.
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql://", 1)

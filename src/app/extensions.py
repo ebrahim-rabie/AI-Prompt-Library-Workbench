@@ -1,0 +1,29 @@
+"""Shared Flask extensions, created once and bound to the app in create_app()."""
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
+from sqlalchemy import MetaData, event
+from sqlalchemy.engine import Engine
+
+# Stable constraint names so Alembic migrations work the same on SQLite and PostgreSQL.
+NAMING_CONVENTION = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+
+db = SQLAlchemy(metadata=MetaData(naming_convention=NAMING_CONVENTION))
+migrate = Migrate()
+csrf = CSRFProtect()
+
+
+@event.listens_for(Engine, "connect")
+def _enable_sqlite_foreign_keys(dbapi_connection, connection_record):
+    """SQLite ignores foreign keys unless this pragma is set on every connection."""
+    module = type(dbapi_connection).__module__
+    if module.startswith("sqlite3"):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()

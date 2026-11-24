@@ -1,6 +1,10 @@
-"""User entity (table: users) - accounts and sign-in state. Guests are not stored."""
-from sqlalchemy import CheckConstraint, Index, func
-from werkzeug.security import check_password_hash, generate_password_hash
+"""User entity (table: users) - accounts and sign-in state. Guests are not stored.
+
+Matches the User entity of the class diagram (Design Figure 3). Password hashing,
+password checks and the lock check belong to AuthService (Figure 3); the entity
+only stores the data and offers the two model calls used in Figure 4.
+"""
+from sqlalchemy import CheckConstraint, Index, func, or_
 
 from ..extensions import db
 from ..utils import utcnow
@@ -36,14 +40,21 @@ class User(db.Model):
     collections = db.relationship("Collection", back_populates="user", lazy="dynamic",
                                   cascade="all, delete-orphan")
 
-    # --- password (NFR-02a: only a salted hash is stored) -------------------
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+    # --- Figure 4 model calls -------------------------------------------------
+    @classmethod
+    def find_by_username_or_email(cls, identifier):
+        """Return the user whose username or email matches (any letter case), or None."""
+        value = (identifier or "").strip().lower()
+        if not value:
+            return None
+        return cls.query.filter(or_(func.lower(cls.username) == value, func.lower(cls.email) == value)).first()
 
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+    def reset_failed_attempts(self):
+        """Clear the failure counter and any lock after a correct password (Figure 4)."""
+        self.failed_login_attempts = 0
+        self.lock_until = None
 
-    # --- state helpers ------------------------------------------------------
+    # --- read-only helpers ----------------------------------------------------
     @property
     def is_admin(self):
         return self.role == Role.ADMINISTRATOR
@@ -51,10 +62,6 @@ class User(db.Model):
     @property
     def is_suspended(self):
         return self.status == AccountStatus.SUSPENDED
-
-    def is_locked(self, now=None):
-        now = now or utcnow()
-        return self.lock_until is not None and self.lock_until > now
 
     def __repr__(self):
         return f"<User {self.id} {self.username!r}>"

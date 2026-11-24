@@ -42,9 +42,14 @@ class Prompt(db.Model):
                                cascade="all, delete-orphan")
     tags = db.relationship("Tag", secondary=prompt_tags, back_populates="prompts")
 
-    @property
     def latest_version(self):
+        """latestVersion() in Design Figure 3: the newest PromptVersion, or None."""
         return self.versions[-1] if self.versions else None
+
+    @property
+    def rating_count(self):
+        """/ratingCount in Design Figure 3: derived from the ratings table, not stored (Design 4.4.1)."""
+        return self.ratings.count()
 
     def __repr__(self):
         return f"<Prompt {self.id} {self.title!r} {self.status}>"

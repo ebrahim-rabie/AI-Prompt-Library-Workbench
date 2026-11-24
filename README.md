@@ -81,9 +81,9 @@ committing it. Production settings are described in [deployment/README.md](deplo
 | Layer | Folder | Contents |
 |---|---|---|
 | Model | `src/app/models/` | SQLAlchemy entities for all 10 tables, enumerations, validation rules |
-| Model | `src/app/services/` | Business rules called by the controllers (`AuthService`, ...) |
+| Model | `src/app/services/` | Business rules called by the controllers (`AuthService`, `CollectionService`, ...) - names follow Design Figure 3 |
 | Controller | `src/app/controllers/` | Flask Blueprints, one per feature, and the error pages |
-| Controller | `src/app/middleware/auth.py` | Session timeout, `login_required` (401), `admin_required` (403), `require_owner` (403) |
+| Controller | `src/app/middleware/auth.py` | `AuthMiddleware`: `enforce_session_timeout`, `create_session`, `require_login` (401), `require_admin` (403), `check_ownership` (403), `not_owner` |
 | View | `src/app/templates/`, `src/app/static/` | Jinja2 templates (all extend `base.html`) and CSS |
 
 New features add a Blueprint in `src/app/controllers/`, register it in `_register_blueprints()` in

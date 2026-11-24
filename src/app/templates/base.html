@@ -28,10 +28,11 @@
 
       <nav class="topbar__nav" aria-label="Main">
         <a href="{{ url_for('pages.home') }}">Home</a>
+        <a href="{{ url_for('pages.faq') }}">FAQ</a>
         {% if current_user %}
           {# Teammates: add links for My Prompts, Collections and Admin here as those pages are built. #}
           {% block nav_user_links %}{% endblock %}
-          <a href="{{ url_for('profile.show') }}">Profile</a>
+          <a href="{{ url_for('profile.view_profile') }}">Profile</a>
           <form class="inline-form" method="post" action="{{ url_for('auth.logout') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn--ghost">Sign out</button>

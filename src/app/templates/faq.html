@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}FAQ{% endblock %}
+
+{# FaqView (Design Figure 3) - user documentation required by SRS 2.7. #}
+{% block content %}
+<section class="faq">
+  <h1>Frequently asked questions</h1>
+
+  <h2>How do I write a template with variables?</h2>
+  <p>Write your prompt text and put each part that changes in double braces, for example
+    <span class="var">{{ '{{topic}}' }}</span>. Every different name becomes one variable (up to 10).
+    For each variable you choose a label, a type (Text, Long Text or Number), an optional default value
+    and whether it is required. Names start with a letter or underscore and contain only letters,
+    digits and underscores.</p>
+
+  <h2>What is the difference between a draft and a published prompt?</h2>
+  <p>A draft is private and only needs a title to be saved. To publish it, the prompt needs a title,
+    a description, a target model, 1 to 5 tags and a template text, and every placeholder must have a
+    variable. If something is missing, all the problems are listed together.</p>
+
+  <h2>How do versions work?</h2>
+  <p>When you edit a published prompt, your change is saved as a new version (2, 3, ...) with an optional
+    change note. You can open the history and view any version. Rolling back copies an older version
+    into a new latest version, so no version is ever deleted.</p>
+
+  <h2>What is a fork?</h2>
+  <p>Forking copies someone else's published prompt into your own drafts, with its text, variables,
+    tags and target model. The copy links back to the original, and you can change and publish it as
+    your own. You cannot fork your own prompts.</p>
+
+  <h2>Does the Workbench send my prompt to an AI model?</h2>
+  <p>No. The Workbench only replaces the placeholders with the values you type and shows the result
+    with its character and word count. You can copy it or download it as .txt, .md or .json.
+    Nothing is sent anywhere and nothing is saved.</p>
+
+  <h2>How are reports handled?</h2>
+  <p>You can report a prompt or a review that breaks the community rules, once per item. The owner never
+    sees who reported it. An administrator reviews the report and either dismisses it, hides the content,
+    or suspends the account. Suspended accounts cannot sign in.</p>
+
+  <h2>Why was I signed out?</h2>
+  <p>For your security, you are signed out after 60 minutes without activity, and on all other devices
+    when you change your password. After 5 wrong passwords in a row, signing in is blocked for 15 minutes.</p>
+</section>
+{% endblock %}

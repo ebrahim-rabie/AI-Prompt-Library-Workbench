@@ -4,7 +4,7 @@ from flask import Blueprint, g
 
 from app import create_app
 from app.extensions import db as _db
-from app.middleware.auth import admin_required, login_required, require_owner
+from app.middleware.auth import AuthMiddleware
 from app.services.auth_service import AuthService
 
 DEFAULT_PASSWORD = "Passw0rd!"
@@ -15,19 +15,19 @@ def _register_probe_routes(app):
     probe = Blueprint("probe", __name__, url_prefix="/_probe")
 
     @probe.route("/member")
-    @login_required
+    @AuthMiddleware.require_login
     def member():
         return f"member {g.user.username}"
 
     @probe.route("/admin")
-    @admin_required
+    @AuthMiddleware.require_admin
     def admin():
         return "admin ok"
 
     @probe.route("/owned-by/<int:owner_id>")
-    @login_required
+    @AuthMiddleware.require_login
     def owned(owner_id):
-        require_owner(owner_id)
+        AuthMiddleware.check_ownership(owner_id)
         return "owner ok"
 
     app.register_blueprint(probe)
@@ -61,7 +61,7 @@ def make_user(app):
     def _make_user(username=None, email=None, display_name=None, password=DEFAULT_PASSWORD):
         counter["n"] += 1
         username = username or f"user{counter['n']}"
-        return AuthService.register(
+        return AuthService.register_user(
             username=username,
             email=email or f"{username}@example.com",
             display_name=display_name or username.title(),

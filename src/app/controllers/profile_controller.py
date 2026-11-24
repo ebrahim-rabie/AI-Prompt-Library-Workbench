@@ -1,7 +1,7 @@
-"""ProfileController - view and edit the profile, change the password (FR-03; UC-03)."""
+"""ProfileController - viewProfile(), updateProfile(), changePassword() (Design Figure 3; FR-03; UC-03)."""
 from flask import Blueprint, flash, g, redirect, render_template, request, url_for
 
-from ..middleware.auth import login_required, refresh_password_fingerprint
+from ..middleware.auth import AuthMiddleware
 from ..services.auth_service import AuthService
 from ..services.errors import ValidationError
 
@@ -20,14 +20,14 @@ def _render(profile_values=None, profile_errors=None, password_errors=None, stat
 
 
 @profile_bp.route("", methods=["GET"])
-@login_required
-def show():
+@AuthMiddleware.require_login
+def view_profile():
     return _render()
 
 
 @profile_bp.route("", methods=["POST"])
-@login_required
-def update():
+@AuthMiddleware.require_login
+def update_profile():
     values = {
         "display_name": request.form.get("display_name", ""),
         "bio": request.form.get("bio", ""),
@@ -38,11 +38,11 @@ def update():
         return _render(profile_values=values, profile_errors=exc.errors, status=400)
 
     flash("Profile saved.", "success")
-    return redirect(url_for("profile.show"))
+    return redirect(url_for("profile.view_profile"))
 
 
 @profile_bp.route("/password", methods=["POST"])
-@login_required
+@AuthMiddleware.require_login
 def change_password():
     try:
         AuthService.change_password(
@@ -55,6 +55,6 @@ def change_password():
         return _render(password_errors=exc.errors, status=400)
 
     # This session stays signed in; sessions on other devices end on their next request.
-    refresh_password_fingerprint(g.user)
+    AuthMiddleware.refresh_password_fingerprint(g.user)
     flash("Password changed. Other devices have been signed out.", "success")
-    return redirect(url_for("profile.show"))
+    return redirect(url_for("profile.view_profile"))

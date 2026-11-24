@@ -14,7 +14,7 @@
     </dl>
     <p class="field__hint">Username and email cannot be changed.</p>
 
-    <form method="post" action="{{ url_for('profile.update') }}" novalidate>
+    <form method="post" action="{{ url_for('profile.update_profile') }}" novalidate>
       {{ csrf_field() }}
       {{ field("display_name", "Display name", values.display_name, profile_errors.display_name,
                required=True, maxlength=100) }}

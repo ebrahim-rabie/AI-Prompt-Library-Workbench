@@ -14,7 +14,7 @@ PASSWORD = "Passw0rd!"
 
 def register(username="alice", email="alice@example.com", display_name="Alice", password=PASSWORD,
              confirmation=None):
-    return AuthService.register(username, email, display_name, password,
+    return AuthService.register_user(username, email, display_name, password,
                                 password if confirmation is None else confirmation)
 
 
@@ -151,8 +151,8 @@ def test_update_profile_rejects_invalid_values(db):
 def test_change_password(db):
     user = register()
     AuthService.change_password(user, PASSWORD, "NewPass99", "NewPass99")
-    assert user.check_password("NewPass99")
-    assert not user.check_password(PASSWORD)
+    assert AuthService.verify_password(user, "NewPass99")
+    assert not AuthService.verify_password(user, PASSWORD)
 
 
 def test_change_password_wrong_current_keeps_old_password(db):
@@ -160,7 +160,7 @@ def test_change_password_wrong_current_keeps_old_password(db):
     with pytest.raises(ValidationError) as exc:
         AuthService.change_password(user, "Wrong1234", "NewPass99", "NewPass99")
     assert "current_password" in exc.value.errors
-    assert user.check_password(PASSWORD)
+    assert AuthService.verify_password(user, PASSWORD)
 
 
 def test_change_password_validates_new_password(db):
@@ -168,7 +168,7 @@ def test_change_password_validates_new_password(db):
     with pytest.raises(ValidationError) as exc:
         AuthService.change_password(user, PASSWORD, "weak", "different")
     assert set(exc.value.errors) == {"new_password", "new_password_confirmation"}
-    assert user.check_password(PASSWORD)
+    assert AuthService.verify_password(user, PASSWORD)
 
 
 # --- Review fixes -------------------------------------------------------------
@@ -190,7 +190,7 @@ def test_register_race_reports_the_field_that_collided(db, monkeypatch):
 
 
 def test_register_with_administrator_role(db):
-    user = AuthService.register("admin", "admin@example.com", "Admin", PASSWORD, PASSWORD, role="Administrator")
+    user = AuthService.register_user("admin", "admin@example.com", "Admin", PASSWORD, PASSWORD, role="Administrator")
     assert user.is_admin
 
 
@@ -200,3 +200,40 @@ def test_oversized_credentials_get_generic_error_without_counting(db):
         AuthService.authenticate("alice", "x" * 500)
     assert exc.value.message == GENERIC_SIGN_IN_ERROR
     assert user.failed_login_attempts == 0
+
+
+# --- Design Figure 3 / Figure 4 methods ---------------------------------------
+def test_find_by_username_or_email(db):
+    user = register()
+    assert User.find_by_username_or_email("ALICE") == user
+    assert User.find_by_username_or_email(" alice@EXAMPLE.com ") == user
+    assert User.find_by_username_or_email("nobody") is None
+    assert User.find_by_username_or_email("") is None
+
+
+def test_is_locked_and_reset_failed_attempts(db):
+    user = register()
+    assert not AuthService.is_locked(user)
+    for _ in range(5):
+        AuthService.record_failed_attempt(user)
+    assert AuthService.is_locked(user)
+    user.reset_failed_attempts()
+    assert not AuthService.is_locked(user) and user.failed_login_attempts == 0
+
+
+def test_hash_and_verify_password():
+    hashed = AuthService.hash_password("Passw0rd!")
+    assert hashed != "Passw0rd!"
+    user = User(password_hash=hashed)
+    assert AuthService.verify_password(user, "Passw0rd!")
+    assert not AuthService.verify_password(user, "wrong")
+
+
+def test_ensure_favorites_is_idempotent(db):
+    from app.services.collection_service import CollectionService
+
+    user = register()
+    first = CollectionService.ensure_favorites(user)
+    db.session.commit()
+    assert CollectionService.ensure_favorites(user) == first
+    assert db.session.query(Collection).filter_by(user_id=user.id).count() == 1

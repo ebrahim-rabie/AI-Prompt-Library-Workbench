@@ -5,11 +5,12 @@ from sqlalchemy.exc import IntegrityError
 from app.models import (Collection, ModerationAction, Prompt, PromptVariable, PromptVersion, Rating, Report,
                         Review, Tag, User)
 from app.models.enums import PromptStatus
+from app.services.auth_service import AuthService
 
 
 def _user(db, username="alice", email="alice@example.com"):
     user = User(username=username, email=email, display_name=username.title())
-    user.set_password("Passw0rd!")
+    user.password_hash = AuthService.hash_password("Passw0rd!")
     db.session.add(user)
     db.session.commit()
     return user
@@ -45,8 +46,8 @@ def test_user_defaults_and_password_is_hashed(db):
     assert user.failed_login_attempts == 0
     assert user.registered_at is not None
     assert "Passw0rd!" not in user.password_hash
-    assert user.check_password("Passw0rd!")
-    assert not user.check_password("wrong")
+    assert AuthService.verify_password(user, "Passw0rd!")
+    assert not AuthService.verify_password(user, "wrong")
 
 
 def test_username_unique_ignoring_case(db):
@@ -73,7 +74,7 @@ def test_prompt_defaults_and_status_check(db):
     assert prompt.status == PromptStatus.DRAFT
     assert prompt.fork_count == 0
     assert prompt.average_rating == 0
-    assert prompt.latest_version.version_number == 1
+    assert prompt.latest_version().version_number == 1
     _expect_integrity_error(db, Prompt(owner_id=prompt.owner_id, title="t", status="Deleted"))
     _expect_integrity_error(db, Prompt(owner_id=prompt.owner_id, title="t", target_model="Llama"))
 
@@ -84,7 +85,7 @@ def test_version_number_unique_per_prompt(db):
 
 
 def test_variable_name_unique_per_version_and_type_checked(db):
-    version = _prompt(db, _user(db)).latest_version
+    version = _prompt(db, _user(db)).latest_version()
     db.session.add(PromptVariable(version=version, name="topic", label="Topic", data_type="Text"))
     db.session.commit()
     _expect_integrity_error(db, PromptVariable(version_id=version.id, name="topic", label="Again",
@@ -192,3 +193,13 @@ def test_only_one_favorites_collection_per_user(db):
     db.session.add(Collection(user=user, name="Coding", is_default=False))
     db.session.commit()
     _expect_integrity_error(db, Collection(user_id=user.id, name="Favorites 2", is_default=True))
+
+
+def test_rating_count_is_derived_from_ratings(db):
+    owner = _user(db)
+    prompt = _prompt(db, owner)
+    assert prompt.rating_count == 0
+    db.session.add(Rating(user=_user(db, "bob", "bob@example.com"), prompt=prompt, value=5))
+    db.session.add(Rating(user=_user(db, "carol", "carol@example.com"), prompt=prompt, value=3))
+    db.session.commit()
+    assert prompt.rating_count == 2

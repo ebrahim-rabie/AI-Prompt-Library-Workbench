@@ -104,3 +104,10 @@ def test_signed_in_user_is_sent_away_from_register_and_login(client, make_user):
 
 def test_logout_requires_post(client):
     assert client.get("/logout").status_code == 405
+
+
+def test_faq_page(client):
+    response = client.get("/faq")
+    page = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert "Frequently asked questions" in page and "How do versions work?" in page

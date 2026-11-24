@@ -60,8 +60,8 @@ def create_app(config_name=None):
     _register_https_redirect(app)
     _register_security_headers(app)
 
-    from .middleware import auth as auth_middleware
-    auth_middleware.init_app(app)
+    from .middleware.auth import AuthMiddleware
+    AuthMiddleware.init_app(app)
 
     _register_blueprints(app)
 

@@ -1,9 +1,9 @@
-"""AuthController - register, sign in, sign out (FR-01, FR-02; UC-01, UC-02)."""
+"""AuthController - register(), login(), logout() (Design Figure 3; FR-01, FR-02; UC-01, UC-02)."""
 from urllib.parse import urlsplit
 
 from flask import Blueprint, flash, g, redirect, render_template, request, url_for
 
-from ..middleware.auth import end_session, start_session
+from ..middleware.auth import AuthMiddleware
 from ..services.auth_service import AuthService
 from ..services.errors import AuthenticationError, ValidationError
 
@@ -25,7 +25,7 @@ def register():
         "display_name": form.get("display_name", ""),
     }
     try:
-        AuthService.register(
+        AuthService.register_user(
             username=values["username"],
             email=values["email"],
             display_name=values["display_name"],
@@ -56,14 +56,14 @@ def login():
         return render_template("auth/login.html", identifier=identifier, error=exc.message,
                                next_url=next_url), 401
 
-    start_session(user)
+    AuthMiddleware.create_session(user)  # Figure 4: createSession(user, 60 min inactivity)
     flash(f"Signed in as {user.display_name}.", "success")
     return redirect(_safe_next(next_url) or url_for("pages.home"))
 
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
-    end_session()
+    AuthMiddleware.end_session()
     flash("Signed out.", "success")
     return redirect(url_for("pages.home"))
 

@@ -212,3 +212,17 @@ def test_development_without_secret_key_uses_random_key(monkeypatch):
     first, second = create_app("development"), create_app("development")
     assert len(first.secret_key) == 64
     assert first.secret_key != second.secret_key
+
+
+def test_not_owner(app, make_user):
+    from flask import g
+
+    from app.middleware.auth import AuthMiddleware
+
+    alice, bob = make_user("alice"), make_user("bob")
+    with app.test_request_context():
+        g.user = None
+        assert not AuthMiddleware.not_owner(alice.id)   # signed out: not allowed either
+        g.user = alice
+        assert not AuthMiddleware.not_owner(alice.id)   # own prompt: cannot rate/review/report/fork
+        assert AuthMiddleware.not_owner(bob.id)

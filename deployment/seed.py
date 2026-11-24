@@ -77,8 +77,8 @@ def seed_admin(username, email, password):
 
     try:
         # One transaction: the account is created with the Administrator role directly.
-        admin = AuthService.register(username, email, "Administrator", password, password,
-                                     role=Role.ADMINISTRATOR)
+        admin = AuthService.register_user(username, email, "Administrator", password, password,
+                                          role=Role.ADMINISTRATOR)
     except ValidationError as exc:
         problems = "; ".join(f"{field}: {message}" for field, message in exc.errors.items())
         return f"Administrator not created: {problems}"

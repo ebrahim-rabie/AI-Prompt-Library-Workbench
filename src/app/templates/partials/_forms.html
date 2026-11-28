@@ -1,0 +1,40 @@
+{#
+  Form macros shared by every page. Import with:
+    {% from "partials/_forms.html" import field, textarea, csrf_field %}
+  User text is escaped automatically by Jinja2 (NFR-02c).
+#}
+
+{% macro csrf_field() -%}
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{%- endmacro %}
+
+{% macro field(name, label, value="", error=None, type="text", hint=None, autocomplete=None,
+               required=False, maxlength=None, readonly=False) -%}
+  {% set field_id = "field-" ~ name %}
+  <div class="field{% if error %} field--invalid{% endif %}">
+    <label for="{{ field_id }}">{{ label }}</label>
+    <input id="{{ field_id }}" name="{{ name }}" type="{{ type }}"
+           {%- if type != "password" %} value="{{ value or '' }}"{% endif %}
+           {%- if autocomplete %} autocomplete="{{ autocomplete }}"{% endif %}
+           {%- if required %} required{% endif %}
+           {%- if maxlength %} maxlength="{{ maxlength }}"{% endif %}
+           {%- if readonly %} readonly{% endif %}
+           {%- if hint or error %} aria-describedby="{% if hint %}{{ field_id }}-hint {% endif %}{% if error %}{{ field_id }}-error{% endif %}"{% endif %}
+           {%- if error %} aria-invalid="true"{% endif %}>
+    {% if hint %}<p class="field__hint" id="{{ field_id }}-hint">{{ hint }}</p>{% endif %}
+    {% if error %}<p class="field__error" id="{{ field_id }}-error">{{ error }}</p>{% endif %}
+  </div>
+{%- endmacro %}
+
+{% macro textarea(name, label, value="", error=None, hint=None, rows=4, maxlength=None) -%}
+  {% set field_id = "field-" ~ name %}
+  <div class="field{% if error %} field--invalid{% endif %}">
+    <label for="{{ field_id }}">{{ label }}</label>
+    <textarea id="{{ field_id }}" name="{{ name }}" rows="{{ rows }}"
+              {%- if maxlength %} maxlength="{{ maxlength }}"{% endif %}
+              {%- if hint or error %} aria-describedby="{% if hint %}{{ field_id }}-hint {% endif %}{% if error %}{{ field_id }}-error{% endif %}"{% endif %}
+              {%- if error %} aria-invalid="true"{% endif %}>{{ value or '' }}</textarea>
+    {% if hint %}<p class="field__hint" id="{{ field_id }}-hint">{{ hint }}</p>{% endif %}
+    {% if error %}<p class="field__error" id="{{ field_id }}-error">{{ error }}</p>{% endif %}
+  </div>
+{%- endmacro %}

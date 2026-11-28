@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Prompt library{% endblock %} | PromptLib</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="{{ url_for('pages.home') }}" aria-label="PromptLib home">
+        <span class="brand__brace" aria-hidden="true">{{ '{{' }}</span>PromptLib<span class="brand__brace" aria-hidden="true">{{ '}}' }}</span>
+      </a>
+
+      <form class="topbar__search" action="{{ url_for('pages.home') }}" method="get" role="search">
+        <label class="visually-hidden" for="site-search">Search prompts</label>
+        <input id="site-search" name="q" type="search" value="{{ request.args.get('q', '') }}"
+               placeholder="Search prompts by keyword (title, description, tags)">
+        <button type="submit" class="btn btn--secondary">Search</button>
+      </form>
+
+      <nav class="topbar__nav" aria-label="Main">
+        <a href="{{ url_for('pages.home') }}">Home</a>
+        <a href="{{ url_for('pages.faq') }}">FAQ</a>
+        {% if current_user %}
+          {# Teammates: add links for My Prompts, Collections and Admin here as those pages are built. #}
+          {% block nav_user_links %}{% endblock %}
+          <a href="{{ url_for('profile.view_profile') }}">Profile</a>
+          <form class="inline-form" method="post" action="{{ url_for('auth.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn--ghost">Sign out</button>
+          </form>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}">Sign in</a>
+          <a class="btn btn--primary" href="{{ url_for('auth.register') }}">Register</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="page {% block page_class %}{% endblock %}">
+    {% include "partials/_alerts.html" %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <p>AI Prompt Library &amp; Workbench, CSAI 203, Fall 2026</p>
+  </footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
